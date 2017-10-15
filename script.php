@@ -13,18 +13,29 @@ class CheckProgression
     protected function isGeometricProgression (array $checkArray)
     {
         $checkResult = true;
-
         $prevItem = $checkArray[0];
+        $epsilon = 0.001;
+
+        if ($checkArray[1] == 0 || $checkArray[0] == 0) {
+            return false;
+        }
 
         $diff = $checkArray[1] / $checkArray[0];
 
         foreach ($checkArray as $index => $item) {
+            if ($item == 0) {
+                $checkResult = false;
+                break;
+            }
+
             if ($index !== 0) { //
-                if (($item / $prevItem) !== $diff) {
+
+                $newDiff = $item / $prevItem;
+                if (abs($newDiff - $diff) < $epsilon ) {
+                    $prevItem = $item;
+                } else {
                     $checkResult = false;
                     break;
-                } else {
-                    $prevItem = $item;
                 }
             }
         }
@@ -41,16 +52,17 @@ class CheckProgression
         $checkResult = true;
 
         $prevItem = $checkArray[0];
-
+        $epsilon = 0.001;
         $diff = $checkArray[1] - $checkArray[0];
 
         foreach ($checkArray as $index => $item) {
-            if ($index !== 0) { //
-                if (($item - $prevItem) !== $diff) {
+            if ($index !== 0) {
+                $newDiff = $item - $prevItem;
+                if (abs($newDiff - $diff) < $epsilon ) {
+                    $prevItem = $item;
+                } else {
                     $checkResult = false;
                     break;
-                } else {
-                    $prevItem = $item;
                 }
             }
         }
@@ -58,17 +70,6 @@ class CheckProgression
         return $checkResult;
     }
 
-    /**
-     * @param $string
-     * @return bool|int
-     */
-    protected function isValidString ($string)
-    {
-        if(!$string || strlen($string) == 0) {
-            return false;
-        }
-        return preg_match('/^([-+]?[0-9]*[.]?[0-9]+,)*[-+]?[0-9]*[.]?[0-9]+$/', $string);
-    }
 
     /**
      * @param $arguments
@@ -79,19 +80,41 @@ class CheckProgression
         return (count($arguments) == 2);
     }
 
+
+    /**
+     * @param $arguments
+     * @return bool
+     */
+    protected function validateNumbers ($arrayNumbers)
+    {
+        $checkResult = true;
+
+        if (count($arrayNumbers) < 3) {
+            echo 'Error: Minimal quantity of numbers  must be 3' . PHP_EOL;
+            $this->help();
+            return false;
+        }
+
+        foreach ($arrayNumbers as $index => $item) {
+            if (! is_numeric($item)) {
+                echo 'Error: Incorrect numbers in string' . PHP_EOL;
+                $checkResult = false;
+                break;
+            }
+        }
+
+        return $checkResult;
+    }
+
+
     /**
      * @param $arguments
      */
     public function __construct ($arguments)
     {
         if ($this->isValidScriptArgs($arguments)) {
-            if ($this->isValidString($arguments[1])) {
-                $checkArray = explode(',', $arguments[1]);
-                if (count($checkArray) < 2) {
-                    echo 'Error: quantity of numbers in string must be more then one' . PHP_EOL;
-                    $this->help();
-                    return false;
-                }
+            $checkArray = explode(',', $arguments[1]);
+            if ($this->validateNumbers($checkArray)) {
                 if ($this->isArithmeticProgression($checkArray)) {
                     echo 'Ok. Its a Arithmetic progression! Congratulation!' . PHP_EOL;
                 } elseif ($this->isGeometricProgression($checkArray)) {
@@ -99,13 +122,11 @@ class CheckProgression
                 } else {
                     echo 'Sorry. Its not a  progression'  . PHP_EOL;
                 }
-            } else {
-                echo 'Error: Invalid string format' . PHP_EOL;
-                $this->help();
             }
         } else {
             echo 'Error: Incorrect quantity of arguments' . PHP_EOL;
             $this->help();
+            return false;
         }
     }
 
